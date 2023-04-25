@@ -17,7 +17,7 @@ http://zadig.akeo.ie/
    * Install from source https://github.com/eblot/pyftdi
    * pip install pyftdi
 
-Note (PtrO): use (only) pyftdi-0.29.0
+Note (PtrO): uses (only) pyftdi-0.29.0 retrieved from tag https://github.com/eblot/pyftdi/tree/v0.29.0
    
 ---
 ## Install
@@ -25,6 +25,7 @@ Note (PtrO): use (only) pyftdi-0.29.0
 ```
 pip install git+https://github.com/ohjeongwook/dumpflash
 ```
+Note: for ptro use url: https://github.com/ptrooms/dumpflash/blob/ptro/
 
 ---
 ### Upgrade
@@ -32,6 +33,7 @@ pip install git+https://github.com/ohjeongwook/dumpflash
 ```
 pip install git+https://github.com/ohjeongwook/dumpflash --upgrade
 ```
+Note: for ptro use url: https://github.com/ptrooms/dumpflash/blob/ptro/
 
 ---
 ### Changes
@@ -50,7 +52,9 @@ pip install git+https://github.com/ohjeongwook/dumpflash --upgrade
 
 use: python3 dumpflash.py -h  for help.
 
-Display interface & chip status
+Be careful as some options have other effects with commands.
+
+Display interface & chip status:
 ```
 ptro@sh67:~/code-dumpflash/dumpflash$ python3 dumpflash.py
 Type of FTDI= ft2232h , has_mpsse= True , wideport= True , bitbang= False
