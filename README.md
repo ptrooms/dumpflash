@@ -48,6 +48,11 @@ Note: for ptro use url: https://github.com/ptrooms/dumpflash/blob/ptro/
    * write/read by options, can do/remove/add the native OOB / JFFS processing & ecc check
 
 ---
+### Hardware connection
+Note: we use the ftdi2232h in MCU mode and connect this to single frame NanD
+-- [FTDI-NanD connection](Images/schematics.png?raw=true "Title")
+
+---
 ### Key Usage
 
 use: python3 dumpflash.py -h  for help.
