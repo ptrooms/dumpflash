@@ -54,11 +54,7 @@ use: python3 dumpflash.py -h  for help.
 
 Be careful as some options have other effects with commands.
 
----
-### Hardware connection
-* ![FTDI-NanD connection](Images/schematics.png)
-
-Display interface & chip status:
+* Sample commands: Display interface & chip status
 ```
 ptro@sh67:~/code-dumpflash/dumpflash$ python3 dumpflash.py
 Type of FTDI= ft2232h , has_mpsse= True , wideport= True , bitbang= False
@@ -81,22 +77,31 @@ Bits per Cell:   1
 Manufacturer:    Samsung
 ```
 
-Slow (per byte FastClock) Read specific page range per byte (preventing read errors) to file test.dmp:
+* Slow (per byte FastClock) Read specific page range per byte (preventing read errors) to file test.dmp:
 ```
 python3 dumpflash.py -s 0 -t 1 -p 65216 65276 -c read -r -o test.dmp
 ```
 
-Fast (Stream SlowClock) Read pages 12345 to end, starting at data offset 1337 wuith oob removed to default output.dmp file:
+* Fast (Stream SlowClock) Read pages 12345 to end, starting at data offset 1337 wuith oob removed to default output.dmp file:
 ```
 python3 dumpflash.py -s 1337 -t 2112 -p 12345 -1 -c read -S 1 -L
 ```
 
-Rewrite input file to relocated page numbers, using oob (-Raw and not -r-addoob) as is :
+* Rewrite input file to relocated page numbers, using oob (-Raw and not -r-addoob) as is :
 ```
 python3 dumpflash.py -s 0 -t 1 -R -p 65216 65276 -r -c write mtd1_oob.bin
 ```
 
-Erase blocks to 0xff (without setting ecc/oob/jffs)
+* Check badBlock 221 to 444 (including)
+```
+python3 dumpflash.py -b 221 444 -c check_backblocks
+```
+* same based on page number in hexstart and decimal end:
+```
+python3 dumpflash.py -p 0x03740 28416 -c check_backblocks
+```
+
+* Erase blocks to 0xff (without setting ecc/oob/jffs), display v-erbose information
 ```
 python3 dumpflash.py -b 1019 1020 -c erase -v
 ```
