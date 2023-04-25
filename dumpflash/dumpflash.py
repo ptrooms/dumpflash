@@ -39,7 +39,7 @@ import random
 
 parser = OptionParser()
 # removed e[xtract],
-parser.add_option("-c", dest = "command", default = "information", help = "Command (i[nformation], read, seq[uential_read], write, test, erase, extract_pages, check_ecc, find_uboot, dump_uboot,find_jffs2, dump_jffs2, check_bad_blocks, add_oob)")
+parser.add_option("-c", dest = "command", default = "information", help = "Command (i[nformation], read, seq[uential_read], write, test, erase, extract_pages, check_ecc, find_uboot, dump_uboot,find_jffs2, dump_jffs2, check_bad_blocks, add_oob), test, testp, testr")
 parser.add_option("-i", dest = "raw_image_filename", default = '', help = "Use flashfile instead of flashdevice for operations")
 parser.add_option("-o", dest = "output_filename", default = 'output.dmp', help = "Output filename")
 
@@ -566,7 +566,6 @@ elif options.command == 'testr':
 
     filename4 = options.output_filename + '4'
     flash_image_io.read_pages(start_page, end_page, remove_oob, filename4, seq = sequential_read, raw_mode = options.raw_mode, tsize = 1, skip=0)
-
 
     print('\nready, output=', options.output_filename ,', see fileref:', filename4, '(1-4)')
 
