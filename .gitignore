@@ -3,5 +3,11 @@
 *.un~
 *.bak
 *.bin
+*.cap
+pyftdi-0.29.0.zip
+pyftdi-0.29.0/
+datafiles/
+notes.txt
+
 
 setenv.cmd

@@ -2,6 +2,7 @@
 # pylint: disable=line-too-long
 import struct
 import zlib
+import sys  # ptro: facilitate progress line
 
 class uImage:
     HEADER_PACK_STR = '>LLLLLLLBBBB32s'
@@ -113,7 +114,7 @@ class uImage:
     COMP_GZIP = 1
     COMP_BZIP2 = 2
 
-    def __init__(self):
+    def __init__(self, debug_info = False):
         self.filename = None
         self.magic = None
         self.hcrc = None
@@ -127,6 +128,7 @@ class uImage:
         self.type = None
         self.comp = None
         self.name = None
+        self.Debug_info = debug_info
 
     def get_os_string(self, os):
         if os == self.IH_OS_INVALID:
@@ -251,7 +253,18 @@ class uImage:
 
         self.parse_header(header)
 
-    def parse_header(self, header):
+    def parse_header(self, header):  # require bytestream
+        if len(header) < 1:  raise Exception('Problem parse_header, len(header)=', len(header), '. check data.')
+        print ('\nlen(header)=', len(header), ', type(header)=', type(header))  # debug 18apr24 = 0
+
+
+        headerbyte = struct.pack('B', ord(header[0]) )   # convert string to bytearray for python3.5 (was string@python2.7)
+        for i in range(1, len(header), 1):
+            headerbyte += struct.pack('B', ord(header[i]) )
+
+        header = headerbyte
+        # print ('\nlen(header)=', len(header)) #  debug 18apr24 = 0
+
         (self.magic, self.hcrc, self.time, self.size, self.load, self.ep, self.dcrc, self.os, self.arch, self.type, self.comp, self.name) = struct.unpack(self.HEADER_PACK_STR, header)
 
     def dump_header(self):
@@ -375,30 +388,50 @@ class uImage:
 class Util:
     def __init__(self, flash_image_io):
         self.FlashImageIO = flash_image_io
+        self.Debug_info = flash_image_io.Debug_info   # get show debug status from this routine
+        self.UseAnsi = True  # ptro: facilitate progress on same line
 
     def find(self):
         print('Finding U-Boot Images')
         block = 0
 
         while 1:
+            if self.Debug_info:
+               if block == 10: block = self.FlashImageIO.SrcImage.BlockCount-10
+               progress = ((block+1) / self.FlashImageIO.SrcImage.BlockCount)*100
+               # print('Finding U-Boot Images, block', block, ', progress=', progress )  # ptro debug percentage 
+               if self.UseAnsi:
+                  fmt_str = 'Checking Uboot %d%% (Page: %3d/%3d Block: %3d/%3d)\n\033[A'
+               else:
+                  fmt_str = 'Checking Uboot %d%% (Page: %3d/%3d Block: %3d/%3d)\n'
+               sys.stdout.write(fmt_str % (progress, (block*self.FlashImageIO.SrcImage.PagePerBlock), (self.FlashImageIO.SrcImage.PageCount), block, self.FlashImageIO.SrcImage.BlockCount))
+
             ret = self.FlashImageIO.CheckBadBlock(block)
 
             if ret == self.FlashImageIO.BAD_BLOCK:
+                print('-- Badblock', block, ' passed.')
                 pass
             elif ret == self.FlashImageIO.ERROR:
+                print('-- Badblock', block, ' ERROR function terminated.')
                 break
 
             magic = self.FlashImageIO.SrcImage.read_page(block*self.FlashImageIO.SrcImage.PagePerBlock)[0:4]
 
-            if magic == b'\x27\x05\x19\x56':
+            # print('\n Page %d has Magic 0x%x 0x%x 0x%x 0x%x ' % ((block*self.FlashImageIO.SrcImage.PagePerBlock), magic[0], magic[1], magic[2], magic[3] ) ) 
+
+            if magic == b'\x27\x05\x19\x56' or magic == b'\x00\x90\x80\x40':
                 uimage = uImage()
+                # print('\nlen()=', len(self.FlashImageIO.extract_data(block * self.FlashImageIO.SrcImage.PagePerBlock, 64)) )  # debug as extract data gave leng=0
                 uimage.parse_header(self.FlashImageIO.extract_data(block * self.FlashImageIO.SrcImage.PagePerBlock, 64))
-                block_size = uimage.size / self.FlashImageIO.SrcImage.BlockSize
+                block_size = int(uimage.size / self.FlashImageIO.SrcImage.BlockSize)  # python3.5
                 print('\nU-Boot Image found at block %d ~ %d (0x%x ~ 0x%x)' % (block, block+block_size, block, block+block_size))
                 uimage.dump_header()
                 print('')
 
             block += 1
+            if block > self.FlashImageIO.SrcImage.BlockCount: 
+               block -= 1
+               break
 
         print("Checked %d blocks" % (block))
 

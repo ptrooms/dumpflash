@@ -48,9 +48,11 @@ class Calculator:
         p2_ = 0
         p4 = 0
         p4_ = 0
+
         for i in range(0, len(body), 1):
-            ch = ord(body[i])
-            bit0 = ch & 0x1
+            # ch = ord(body[i])   # Python2.7
+            ch = body[i]          # Python3.x
+            bit0 =  ch & 0x1
             bit1 = (ch >> 1) & 0x1
             bit2 = (ch >> 2) & 0x1
             bit3 = (ch >> 3) & 0x1
@@ -60,9 +62,13 @@ class Calculator:
             bit7 = (ch >> 7) & 0x1
 
             xor_bit = bit7 ^ bit6 ^ bit5 ^ bit4 ^ bit3 ^ bit2 ^ bit1 ^ bit0
+            # xor_bit = bit7 ^ bit6 ^ bit5 ^ bit4 ^ bit3 ^ bit2 ^ bit1
 
             if self.DebugLevel > 0:
-                print("%3x  " % i, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0)
+               print("%3x  " % i, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0)
+                
+            # if i < 10 or i >= 2040 :
+            #   print("%3x  " % i, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0, 'x=', xor_bit)
 
             if i & 0x01 == 0x01:
                 p8 = xor_bit ^ p8
@@ -100,6 +106,7 @@ class Calculator:
                 p2048 = xor_bit ^ p2048
             else:
                 p2048_ = xor_bit ^ p2048_
+
             p1 = bit7 ^ bit5 ^ bit3 ^ bit1 ^ p1
             p1_ = bit6 ^ bit4 ^ bit2 ^ bit0 ^ p1_
             p2 = bit7 ^ bit6 ^ bit3 ^ bit2 ^ p2
@@ -107,10 +114,16 @@ class Calculator:
             p4 = bit7 ^ bit6 ^ bit5 ^ bit4 ^ p4
             p4_ = bit3 ^ bit2 ^ bit1 ^ bit0 ^ p4_
 
+            # if i < 10 or i >= 2040 :
+            #   print ('   p1=%d p2=%d p4=%d p8=%d p16=%d p32=%d p64=%d p128=%d p256=%d p512=%d p1024=%d p2048=%d' % (p1, p2, p4, p8, p16, p32, p64, p128, p256, p512, p1024, p2048))
+
         ecc0 = (p64 << 7) + (p64_ << 6) + (p32 << 5) + (p32_ << 4) + (p16 << 3) + (p16_ << 2) + (p8 << 1) + (p8_ << 0)
         ecc1 = (p1024 << 7) + (p1024_ << 6) + (p512 << 5) + (p512_ << 4) + (p256 << 3) + (p256_ << 2) + (p128 << 1) + (p128_<< 0)
         ecc2 = (p4 << 7) + (p4_ << 6) + (p2 << 5) + (p2_ << 4) + (p1 << 3) + (p1_ << 2) + (p2048 << 1) + (p2048_ << 0)
 
+        # print ('ecc0=%d ecc1=%d ecc2=%d' % (ecc0, ecc1, ecc2)) 
+
+        # return (ecc0 , ecc1, ecc2 )
         return (ecc0 ^ 0xff, ecc1 ^ 0xff, ecc2 ^ 0xff)
 
     def calc2(self, body):
@@ -133,37 +146,45 @@ class Calculator:
         rp15 = 0
 
         for i in range(0, len(body), 1):
-            cur = ord(body[i])
+            # cur = ord(body[i])
+            cur = body[i]
             par ^= cur
 
             if i & 0x01:
                 rp1 ^= cur
             else:
                 rp0 ^= cur
+
             if i & 0x02:
                 rp3 ^= cur
             else:
                 rp2 ^= cur
+
             if i & 0x04:
                 rp5 ^= cur
             else:
                 rp4 ^= cur
+
             if i & 0x08:
                 rp7 ^= cur
             else:
                 rp6 ^= cur
+
             if i & 0x10:
                 rp9 ^= cur
             else:
                 rp8 ^= cur
+
             if i & 0x20:
                 rp11 ^= cur
             else:
                 rp10 ^= cur
+
             if i & 0x40:
                 rp13 ^= cur
             else:
                 rp12 ^= cur
+
             if i & 0x80:
                 rp15 ^= cur
             else:
@@ -197,8 +218,16 @@ class Calculator:
             (self.Parity[par & 0xaa] << 3) | \
             (self.Parity[par & 0x55] << 2)
 
+        # return (code0 ^ 0xff, code1 ^ 0xff, code2 ^ 0xff)
+
         code0 = ~code0
         code1 = ~code1
         code2 = ~code2
 
+
+        code0 = abs(code0)
+        code1 = abs(code1)
+        code2 = abs(code2)
+
+        # return (code0 ^ 0xff, code1 ^ 0xff, code2 ^ 0xff)
         return (code0, code1, code2)

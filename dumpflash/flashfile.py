@@ -77,4 +77,8 @@ class IO:
 
     def read_oob(self, pageno):
         self.fd.seek(self.BaseOffset + pageno*self.RawPageSize+self.PageSize)
-        return self.fd.read(self.OOBSize)
+        read_data = self.fd.read(self.OOBSize)
+        print('  ++ flashfile.py-->read_oob: pageno', pageno , ' for OOBSize', self.OOBSize , ', BaseOffset', self.BaseOffset , '+', pageno*self.RawPageSize+self.PageSize , ' readlen:', len(read_data) )
+
+        return read_data
+        # return self.fd.read(self.OOBSize)
