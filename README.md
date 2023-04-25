@@ -55,7 +55,7 @@ use: python3 dumpflash.py -h  for help.
 Be careful as some options have other effects with commands.
 
 ### Hardware connection
-* [FTDI-NanD connection](Images/schematics.png)
+* ![FTDI-NanD connection](Images/schematics.png)
 
 Display interface & chip status:
 ```
