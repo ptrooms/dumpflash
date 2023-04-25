@@ -54,6 +54,9 @@ use: python3 dumpflash.py -h  for help.
 
 Be careful as some options have other effects with commands.
 
+### Hardware connection
+[FTDI-NanD connection](Images/schematics.png?raw=true "Title")
+
 Display interface & chip status:
 ```
 ptro@sh67:~/code-dumpflash/dumpflash$ python3 dumpflash.py
