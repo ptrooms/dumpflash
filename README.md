@@ -54,6 +54,7 @@ use: python3 dumpflash.py -h  for help.
 
 Be careful as some options have other effects with commands.
 
+---
 ### Hardware connection
 * ![FTDI-NanD connection](Images/schematics.png)
 
@@ -80,12 +81,17 @@ Bits per Cell:   1
 Manufacturer:    Samsung
 ```
 
-Read specific page range per byte (preventing read errors) to file
+Slow (per byte FastClock) Read specific page range per byte (preventing read errors) to file test.dmp:
 ```
-python3 dumpflash.py -s 0 -t 1 -p 65216 65276 -c read -r -i
+python3 dumpflash.py -s 0 -t 1 -p 65216 65276 -c read -r -o test.dmp
 ```
 
-Rewrite input file to relocated page numbers, using oob (-Raw and not -r-addoob) as is
+Fast (Stream SlowClock) Read pages 12345 to end, starting at data offset 1337 wuith oob removed to default output.dmp file:
+```
+python3 dumpflash.py -s 1337 -t 2112 -p 12345 -1 -c read -S 1 -L
+```
+
+Rewrite input file to relocated page numbers, using oob (-Raw and not -r-addoob) as is :
 ```
 python3 dumpflash.py -s 0 -t 1 -R -p 65216 65276 -r -c write mtd1_oob.bin
 ```
@@ -95,13 +101,17 @@ Erase blocks to 0xff (without setting ecc/oob/jffs)
 python3 dumpflash.py -b 1019 1020 -c erase -v
 ```
 
-Create testdata streams to chip (-s type, -r-addoob, -j-ffs)
+Create test/data s-ample data  to chip (-s type, -r-addoob, -j-ffs)
+* These were uses to diagnose & checkout the code with NanD functions.
 ```
  python3 dumpflash.py -s 1 -p 65281 -1 -c testp -r
  python3 dumpflash.py -s 9 -p 65281 -1 -c testp
  python3 dumpflash.py -s 1 -p 65281 -1 -c testp -j
 
 ```
+Note we have > 10 data patterns (-s xx)  to be used to identify bitflips and end/start page data.
+Command 'testr" will write en reread for comparisons
+Command 'test" will only (re)write/read page 65535
 
 ---
 ## Notes
