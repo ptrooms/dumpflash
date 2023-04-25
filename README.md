@@ -50,7 +50,8 @@ Note: for ptro use url: https://github.com/ptrooms/dumpflash/blob/ptro/
 ---
 ### Hardware connection
 Note: we use the ftdi2232h in MCU mode and connect this to single frame NanD
--- [FTDI-NanD connection](Images/schematics.png?raw=true "Title")
+* ![FTDI-NanD connection](Images/schematics.png?raw=true "Title")
+Note when wiring, ensure a firm & strong contact to prevent misreads.
 
 ---
 ### Key Usage
