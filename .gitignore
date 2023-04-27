@@ -4,6 +4,7 @@
 *.bak
 *.bin
 *.cap
+badblocks_t38g2.txt
 pyftdi-0.29.0.zip
 pyftdi-0.29.0/
 datafiles/
