@@ -80,7 +80,7 @@ class IO:
             data = self.SrcImage.read_page(page)
 
             if not data:
-#                end_of_file = True
+            #   end_of_file = True
                 break
 
             count += 1
@@ -101,8 +101,7 @@ class IO:
             if ecc0_xor != 0 or ecc1_xor != 0 or ecc2_xor != 0:
                 error_count += 1
 
-#                page_in_block = page%self.SrcImage.PagePerBlock
-
+                # page_in_block = page%self.SrcImage.PagePerBlock
                 offset = self.SrcImage.get_page_offset(page)
                 print('ECC Error (Block: %3d Page: %3d Data Offset: 0x%x OOB Offset: 0x%x)' % (block, page, offset, offset+self.SrcImage.PageSize))
                 print('  OOB:  0x%.2x 0x%.2x 0x%.2x' % (oob_ecc0, oob_ecc1, oob_ecc2))

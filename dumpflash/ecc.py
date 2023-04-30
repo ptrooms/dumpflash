@@ -67,7 +67,7 @@ class Calculator:
             if self.DebugLevel > 0:
                print("%3x  " % i, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0)
                 
-            # if i < 10 or i >= 2040 :
+            # if i < 10 or i >= 2040 :  # debug print
             #   print("%3x  " % i, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0, 'x=', xor_bit)
 
             if i & 0x01 == 0x01:
@@ -114,16 +114,16 @@ class Calculator:
             p4 = bit7 ^ bit6 ^ bit5 ^ bit4 ^ p4
             p4_ = bit3 ^ bit2 ^ bit1 ^ bit0 ^ p4_
 
-            # if i < 10 or i >= 2040 :
+            # if i < 10 or i >= 2040 :  # debug print
             #   print ('   p1=%d p2=%d p4=%d p8=%d p16=%d p32=%d p64=%d p128=%d p256=%d p512=%d p1024=%d p2048=%d' % (p1, p2, p4, p8, p16, p32, p64, p128, p256, p512, p1024, p2048))
 
         ecc0 = (p64 << 7) + (p64_ << 6) + (p32 << 5) + (p32_ << 4) + (p16 << 3) + (p16_ << 2) + (p8 << 1) + (p8_ << 0)
         ecc1 = (p1024 << 7) + (p1024_ << 6) + (p512 << 5) + (p512_ << 4) + (p256 << 3) + (p256_ << 2) + (p128 << 1) + (p128_<< 0)
         ecc2 = (p4 << 7) + (p4_ << 6) + (p2 << 5) + (p2_ << 4) + (p1 << 3) + (p1_ << 2) + (p2048 << 1) + (p2048_ << 0)
 
-        # print ('ecc0=%d ecc1=%d ecc2=%d' % (ecc0, ecc1, ecc2)) 
+        # print ('ecc0=%d ecc1=%d ecc2=%d' % (ecc0, ecc1, ecc2)) # debug print
+        # return (ecc0 , ecc1, ecc2 ) # test/debug return
 
-        # return (ecc0 , ecc1, ecc2 )
         return (ecc0 ^ 0xff, ecc1 ^ 0xff, ecc2 ^ 0xff)
 
     def calc2(self, body):
@@ -218,7 +218,7 @@ class Calculator:
             (self.Parity[par & 0xaa] << 3) | \
             (self.Parity[par & 0x55] << 2)
 
-        # return (code0 ^ 0xff, code1 ^ 0xff, code2 ^ 0xff)
+        # return (code0 ^ 0xff, code1 ^ 0xff, code2 ^ 0xff) # test/debug return
 
         code0 = ~code0
         code1 = ~code1
@@ -229,5 +229,5 @@ class Calculator:
         code1 = abs(code1)
         code2 = abs(code2)
 
-        # return (code0 ^ 0xff, code1 ^ 0xff, code2 ^ 0xff)
+        # return (code0 ^ 0xff, code1 ^ 0xff, code2 ^ 0xff) # test/debug return
         return (code0, code1, code2)

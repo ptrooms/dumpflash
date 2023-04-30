@@ -2,14 +2,13 @@
 # pylint: disable=line-too-long
 
 #  uses ftdi: self.ftdi.set_bitmode(0, ftdi.Ftdi.BitMode.MCU)  --> BITMODE_MCU = 0x08      # MCU Host Bus Emulation mode,
-
-# read approx 700 bytes and then goes stuck
-
-# The K9F1G08X0C is a 1,056Mbit(1,107,296,256 bit) memory organized as 65,536 rows(pages) by 2,112x8 columns. 
+#  Note: The IORDY pin is to ground to enforce larger bitbanging window
+# 
+# We testesd the Samsung K9F1G08X0C is a 1,056Mbit(1,107,296,256 bit) memory organized as 65,536 rows(pages) by 2,112x8 columns. 
 # Spare 64x8 columns are located from column address of 2,048~2,111.
 # Using samsung [/media/Rdisk/Info/Yealink/T36/recovery/T38G_IMG_20230129_022208_747_samsung_K9F1G08U0C.jpg]
-#	size 128M x 8 Bit NAND Flash Memory
-# 	Memory Cell Array : (128M + 4M) x 8bit
+#   size 128M x 8 Bit NAND Flash Memory
+#   Memory Cell Array : (128M + 4M) x 8bit
 #   Data Register : (2K + 64) x 8bit
 #   • Automatic Program and Erase
 #   - Page Program : (2K + 64)Byte
@@ -47,12 +46,12 @@ parser.add_option("-t", type = "int", default = 0, dest = "tsize", help = "Trans
 
 parser.add_option("-L", action = "store_true", dest = "slow", default = False, help = "L-owSpeed, Set clock FTDI chip at 12MHz instead of 60MHz")
 parser.add_option("-R", action = "store_true", dest = "raw_mode", default = False, help = "R-aw mode - skip bad block before readSeq/writing")
-parser.add_option("-S", type = "int", default = 0, dest = "stream",  help = " Stream mode 0-off/per byte , 1-On "  )
+parser.add_option("-S", type = "int", default = 0, dest = "stream",  help = " Stream mode 0-off (slow byte) , 1-On (fast by t-sizepage) "  )
 
-parser.add_option("-r", action = "store_true", dest = "remove_oob", default = False, help = "r-emove OOB-part from write/read")
-parser.add_option("--rof", action = "store_false", dest = "oob_xfile", default = True, help = "Remove OOB from fileoutput")
-# TBD parser.add_option("--roc", action = "store_false", dest = "oob_xchip", default = True, help = "Remove OOB to chip")
-# parser.add_option("-ri", action = "store_true", dest = "remove_oob_in", default = False, help = "Remove OOB from inputfile")
+parser.add_option("-r", action = "store_true", dest = "remove_oob", default = False, help = "r-emove OOB-part from write/read device")
+parser.add_option("--rof", action = "store_false", dest = "oob_xfile", default = True, help = "Remove OOB data from fileoutput")
+# TBD:  parser.add_option("--roc", action = "store_false", dest = "oob_xchip", default = True, help = "Remove OOB to chip")
+# TBD: parser.add_option("-ri", action = "store_true", dest = "remove_oob_in", default = False, help = "Remove OOB from inputfile")
 parser.add_option("-j", action = "store_true", dest = "add_jffs2_oob", default = False, help = "Add JFFS2 OOB to the source")
 
 parser.add_option("-C", dest = "compare_target_filename", default = '', help = "When writing a file compare with this file before writing and write only differences", metavar = "COMPARE_TARGET_FILENAME")
@@ -70,7 +69,7 @@ parser.add_option("-P", type = "int", default = 512, dest = "page_size", help = 
 parser.add_option("-O", type = "int", default = 16, dest = "oob_size", help = "override OOB size (64)")
 parser.add_option("--bp", type = "int", default = 32, dest = "pages_per_block", help = "override pages per block 64" )
 
-parser.add_option("-v", action = "store_true", dest = "debug_info", default = False, help = "Display debug & addtional info lines")
+parser.add_option("-v", action = "store_true", dest = "debug_info", default = False, help = "Simulate write & display debug info lines")
 
 (options, args) = parser.parse_args()
 
@@ -110,14 +109,14 @@ print(' Command:', options.command ) # display the command we use
 
 
 if options.pages is not None:
-    if type(options.pages)==tuple:   # check type of list
+    if type(options.pages)==tuple:   # check type of input list (to try one or more input number)
        start_page = options.pages[0]
        if len(options.pages) > 1:
               end_page = options.pages[1]
     else: 
        start_page = options.pages
        end_page = start_page
-    # print ( 'type(options.pages)', type(options.pages) ,', start_page=', type(start_page), ', end_page=', type(start_page) )
+    # print ( 'type(options.pages)', type(options.pages) ,', start_page=', type(start_page), ', end_page=', type(start_page) ) # debug
     if start_page < -1: start_page = (flash_image_io.SrcImage.PagePerBlock*flash_image_io.SrcImage.BlockCount) - ((start_page*-1)+1)
     if end_page < -1: end_page = (flash_image_io.SrcImage.PagePerBlock*flash_image_io.SrcImage.BlockCount) - (((end_page+1)*-1))
 
@@ -125,7 +124,7 @@ if options.pages is not None:
         print('  Set Option Pages: %d ~ %d \n' % (start_page, end_page))
 
 if options.blocks is not None:
-    if type(options.blocks)==tuple:   # check type of list
+    if type(options.blocks)==tuple:    # check type of input list (to try one or more input number)
        start_block = options.blocks[0]
        if len(options.blocks) > 1:
           end_block = options.blocks[1]
@@ -146,8 +145,6 @@ if options.blocks is not None:
 
 if start_page < 0 and start_block > -1:
     start_page = start_block * flash_image_io.SrcImage.PagePerBlock
-    # if start_page < 0: start_page = 0
-    # end_page = start_page
 
 if end_page < 0 and end_block > -1:
     if end_block < start_block:
@@ -162,7 +159,7 @@ if end_page < 0 and end_block > -1:
        elif end_block < 1: 
            end_page = (flash_image_io.SrcImage.PagePerBlock*flash_image_io.SrcImage.BlockCount) - (abs(end_block+1)*flash_image_io.SrcImage.PagePerBlock)
 if options.debug_info: 
-   print('>>>> checking parms1 resulting page : %d ~ %d  block : %d ~ %d' % (start_page, end_page, start_block, end_block) )
+   print('>>>> checking1 resulting page : %d ~ %d  block : %d ~ %d' % (start_page, end_page, start_block, end_block) )
 
 
 if end_page < start_page: end_page = start_page + end_page
@@ -173,7 +170,7 @@ if end_page > flash_image_io.SrcImage.PageCount:
 if start_page  < 0: start_page = 0
 if end_page    < 0: end_page   = (flash_image_io.SrcImage.PagePerBlock*flash_image_io.SrcImage.BlockCount) - 1
 if options.debug_info: 
-   print('>>>> checking parms2 resulting page : %d ~ %d  block : %d ~ %d' % (start_page, end_page, start_block, end_block) )
+   print('>>>> checking2 resulting page : %d ~ %d  block : %d ~ %d' % (start_page, end_page, start_block, end_block) )
 
 if start_block < 0:
    if start_page > 0:
@@ -188,9 +185,9 @@ if end_block   < 0:
    if (end_block >= flash_image_io.SrcImage.BlockCount): end_block = flash_image_io.SrcImage.BlockCount - 1
 
 if options.debug_info: 
-   print('>>>> checking parms3 resulting page : %d ~ %d  block : %d ~ %d' % (start_page, end_page, start_block, end_block) )
+   print('>>>> checking3 resulting page : %d ~ %d  block : %d ~ %d' % (start_page, end_page, start_block, end_block) )
 
-if options.command == 'erase':	  # works //here5
+if options.command == 'erase':   # works //here5
   # sample: $ python3 dumpflash.py -b 1020 1020 -c erase -v
     flash_image_io.SrcImage.dump_info()
     start = start_block
@@ -228,7 +225,7 @@ elif options.command == 'extract_pages':  # works to interact on files  but uncl
          print('(-r) --bp 64 -O-size 64 -P Pagesize 2048 -i input_file which extracts to -o-utput=', options.output_filename )
 
 elif options.command == 'check_bad_blocks':  # works
-  # sample: $ python3 dumpflash.py -c check_bad_blocks
+  # sample command: $ python3 dumpflash.py -c check_bad_blocks
 
     if options.blocks is not None:
        start_page = start_block * flash_image_io.SrcImage.PagePerBlock
@@ -242,7 +239,7 @@ elif options.command == 'check_ecc':
     flash_image_io.check_ecc()
 
 elif options.command == 'find_uboot':  # works technically, not sure about function
-  # sample python3 dumpflash.py -c find_uboot
+  # sample command python3 dumpflash.py -c find_uboot
     print('Searching for find_uboot')
     uboot_util = uboot.Util(flash_image_io)
     uboot_util.find()
@@ -264,7 +261,7 @@ elif options.command[0] == 'i':  # works, prints chip information and allocated 
 
 # elif options.command[0] == 'r' or options.command[0] == 's' :
 elif options.command == 'read' or options.command == 'seq' :      # works for read
-  # sample: $ python3 dumpflash.py -s 0 -t 1 -R -p 65216 65276  -c read (-r -j)
+  # sample command: $ python3 dumpflash.py -s 0 -t 1 -R -p 65216 65276  -c read (-r -j)
     if options.debug_info:    
        flash_image_io.SrcImage.dump_info()
 
@@ -287,15 +284,14 @@ elif options.command == 'read' or options.command == 'seq' :      # works for re
 #         flash_image_io.extract_pages(options.output_filename, start_page, end_page, remove_oob = True)
 
 elif options.command == 'write':  # works
-  # sample: $ python3 dumpflash.py -s 0 -t 1 -p 65472 65472 -c write -v -j output_p65526.dmp  (-r -j  / remove these from input )
-  #  offset $ python3 dumpflash.py -s 4 -t 1 -p 65529 65529 -c write -v outputP65529.dmp
-  #    data $ python3 dumpflash.py -s 4 -t 1 -p 65529 65529 -c write -d abcdefg  -v outputP65529.dmp
-    # filename = 'test'
+  # sample command: $ python3 dumpflash.py -s 0 -t 1 -p 65472 65472 -c write -v -j output_p65526.dmp  (-r -j  / remove these from input )
+  #          offset $ python3 dumpflash.py -s 4 -t 1 -p 65529 65529 -c write -v outputP65529.dmp
+  #   data terminal $ python3 dumpflash.py -s 4 -t 1 -p 65529 65529 -c write -d abcdefg  -v outputP65529.dmp
     # Note: -r remove oob from input file
 
-    # for i, arg in enumerate(sys.argv):
+    # for i, arg in enumerate(sys.argv):  # test/development print input paramters
     #    print(f"Argument {i:>6}: {arg}")
-    if len(args) > 0: filename = args[0]
+    if len(args) > 0: filename = args[0]  # use filename from terminal
 
     add_oob = True
     add_jffs2_eraser_marker = False
@@ -359,9 +355,9 @@ elif options.command == 'write':  # works
 
 elif options.command == 'testp':  # works , create  test pages using datasets
   # sample set:  $ python3 dumpflash.py -p 65519 65519 -c testp -v   # will skip write due -v
-  #    dataset0  $ python3 dumpflash.py -s 0 -t 2112 -p 65519 65519 -c read output.dmp    # page rows 00-0f
-  #    dataset6  $ python3 dumpflash.py -s 1 -t 2112 -p 65519 65519 -c read output.dmp    # random
-  #     all00ds7  $ python3 dumpflash.py -s 7 -t 2112 -R -p 65472 65472  -c testr
+  #    dataset0  $ python3 dumpflash.py -s 0 -t 2112 -p 65519 65519 -c testp -v    # page rows 00-0f
+  #    dataset6  $ python3 dumpflash.py -s 1 -t 2112 -p 65519 65519 c testp -v     # random
+  #     all00ds7 $ python3 dumpflash.py -s 7 -t 2112 -R -p 65472 65472  -c testp
 
     filename = ''
     use_datastring = ''
@@ -605,11 +601,8 @@ elif options.command == 'test': # works and only uses page 65535
     if options.debug_info:
        print ('-- Pagecount=', flash_image_io.SrcImage.PageCount-1, 'Offset=', options.start_offset, 'Block=' , current_block, 'Start_offset=', start_offset, ', data=', use_datastring) 
 
-
-
     print('\nCommand Test reading to NanD=%s, Block=%d remove_oob=%s, start=0x%x, length=0x%x, Tsize=%d' % (filename, current_block, str(oob_option), start_page, end_page, options.tsize))
     read_data = flash_image_io.read_pages(start_page, end_page, False, filename = '', seq = False, raw_mode = False, tsize = options.tsize)
-
 
     data_offset = '-'
     if len(read_data) > options.start_offset: data_offset = read_data[options.start_offset]
@@ -624,18 +617,19 @@ elif options.command == 'test': # works and only uses page 65535
     # if oob_option: 
     #    oob_option = True
 
-    # >>> x = "Hello World!" >>> x[2:] 'llo World!'
-    #                       >>> x[:2] 'He'
-    #                       >>> x[:-2] 'Hello Worl'
-    #                       >>> x[-2:] 'd!'
-    #                       >>> x[2:-2] 'llo Worl'
-    # s = s[ beginning : beginning + LENGTH]
-    # 
+    # Byte slicing
+    #   >>> x = "Hello World!" >>> x[2:] 'llo World!'
+    #                         >>> x[:2] 'He'
+    #                         >>> x[:-2] 'Hello Worl'
+    #                         >>> x[-2:] 'd!'
+    #                         >>> x[2:-2] 'llo Worl'
+    #   s = s[ beginning : beginning + LENGTH]
+ 
     # print('-- rewrite0: datalen=', len(read_data), ' replacelen=', len(use_datastring) ) # debug
     # print ('-- test_001: len(read_data)=', len(read_data)) 
     
     if start_offset == 0:
-       read_data = use_datastring + read_data[len(use_datastring):len(read_data)]
+       read_data = use_datastring + read_data[len(use_datastring):len(read_data)]  # byte slicing
        # read_data = read_data[0:len(read_data)]
        # test debug print('-- rewrite1: datalen=', len(read_data))
     else: 
@@ -649,7 +643,5 @@ elif options.command == 'test': # works and only uses page 65535
     #   testbyte3 = int(255)  # type int
     #   print('>--> testbyte1=%s testbyte2=%s testbyte3=%s, use_datastring=%s  read_data=%s' % (  type(testbyte1), type(testbyte2), type(testbyte3), type(use_datastring), type(read_data) ) )
 
-
     flash_image_io.SrcImage.write_pages(filename, options.start_offset, start_page, end_page, oob_option, add_jffs2_eraser_marker = add_jffs2_eraser_marker, raw_mode = options.raw_mode, datastring = read_data) 
-
 

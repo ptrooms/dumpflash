@@ -35,7 +35,7 @@ class IO:
         self.SimulationMode = simulation_mode
         self.Tsize = 0                # size to transport exchange buffer with ftdi
         self.Debug_info = debug_info  # print informational messages
-        self.StreamData = streamdata          # 0  = very slow per byte, 1 is equal to full speed (require SLOW) _read1/DoStream read/DoPerByte
+        self.StreamData = streamdata  # 0  = very slow per byte, 1 is equal to full speed (require SLOW) _read1/DoStream read/DoPerByte
 
         print (' flashdevice.__init__: self.Slow=', str(do_slow), 'self.StreamData=', streamdata, '\n')
 
@@ -79,20 +79,20 @@ class IO:
 
 
                 # //here timer
-                # self.ftdi.set_latency_timer(self.ftdi.LATENCY_MIN)		#     LATENCY_MIN = 12 LATENCY_MAX = 255
-                self.ftdi.set_latency_timer(16)		#     LATENCY_MIN = 12 LATENCY_MAX = 255
-                # self.ftdi.set_latency_timer(self.ftdi.LATENCY_MIN)		#     LATENCY_MIN = 12 LATENCY_MAX = 255
-                # self.ftdi.set_latency_timer(128)		#     LATENCY_MIN = 12 LATENCY_MAX = 255
+                # self.ftdi.set_latency_timer(self.ftdi.LATENCY_MIN)        #     LATENCY_MIN = 12 LATENCY_MAX = 255
+                self.ftdi.set_latency_timer(16)        #  LATENCY_MIN = 12 LATENCY_MAX = 255
+                # self.ftdi.set_latency_timer(self.ftdi.LATENCY_MIN)        #     LATENCY_MIN = 12 LATENCY_MAX = 255
+                # self.ftdi.set_latency_timer(128)     #  LATENCY_MIN = 12 LATENCY_MAX = 255
                 self.ftdi.purge_buffers()
 
                 #  ftdi.Ftdi.SET_BITS_HIGH (0xValue,0xDirection)   0x82,0xValue,0xDirection
                 #     This will setup the direction of the high 4 lines and 
                 #     force a value on the bits that are set as output. 
                 #     A '1' in the Direction byte will make that bit an output.
-                # The low byte would be ADBUS 7-0, and the high byte is ACBUS 7-0.
-                # 0x0 writes a low to output pin 0000 0001  
-                # Change MSB GPIO output pin 45 BD6 NanD Chip-Enable Low Output
-                # org: self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x0, 0x1]))  # SET_BITS_HIGH = 0x82    I/O-0 set to Out-0x1
+                # The low byte would be ADBUS 7-0, and the high byte (here) is ACBUS 7-0.
+                #  0x0 writes a low to output pin 0000 0001  
+                #  Change MSB GPIO output pin 45 BD6 NanD Chip-Enable Low Output
+                #  org: self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x0, 0x1]))  # SET_BITS_HIGH = 0x82    I/O-0 set to Out-0x1
                 self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x1, 0x1]))  # SET_BITS_HIGH = 0x82   I/O-0 BDBUS6 set to Out-0x1 active HIGH no LED no CE
                 time.sleep(1)
                 self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x0, 0x1]))  # SET_BITS_HIGH = 0x82   I/O-0 BDBUS6 set to Out-0x1 active LOW with upper led
@@ -114,7 +114,7 @@ class IO:
 
             if  data[0] & 6 != 0x6:   # check mask bit 0000 0020 pin 46 (BDBUS7) is HIGH means ready I/O-1 , LOW means busy.
                 if  self.Debug_info:
-                    print('__wait_ready: R_B NanD status 0x%x ..' % (data[0])) # 0x06     --> 0000 0110  print not ready status
+                    print('__wait_ready: R_B NanD status 0x%x ..' % (data[0])) # BDBUS 0x06 --> 0000 0110  print not ready status
             
             if  data[0] & 2 == 0x2:   # check mask bit 0000 0020 pin 46 (BDBUS7) is HIGH means ready I/O-1 , LOW means busy.
                 return
@@ -126,8 +126,8 @@ class IO:
 
         return
 
-    #  called for data read pages with return self.__read(0, 0, count) , for pages cout=2112 bytes
-    # this builds the buffer which will be transferred to the FTDI by self.ftdi.write_data
+    # called for data read pages with return self.__read(0, 0, count) , for pages cout=2112 bytes
+    #        this builds the buffer which will be transferred to the FTDI by self.ftdi.write_data
 
     def __read1(self, self2, cl, al, count):  # this read will que all commands for one immediate execution
     # read data self.__read(0, 0, count) --> #byte1 0x91 0x00 0x00  + #bytes-1  0x90 0x00 ... ... + 0x87
@@ -148,7 +148,7 @@ class IO:
             cmd_type |= 0x01                            # ACBUS0 high
 
         cmds += [ftdi.Ftdi.READ_EXTENDED, cmd_type, 0]  # MCU mode ftdi READ_EXTENDED = 0x91 0x00=0xCL|0xAH 0x00=0xAL , for pagesdata cmd_type=0
-                                                        # 0x91     0xAH 0xAL This will read 1 byte from the target device.
+                                                        # 0x91 0xAH 0xAL This will read 1 byte from the target device.
         # print('Page count:\t ', int(count) )
         for _ in range(1, int(count), 1):
             # print('Page count:\t ', count)
@@ -250,12 +250,11 @@ class IO:
 
         # address --> self.__write(0, 1, data)   cmd_type = 0x40
         # command --> self.__write(1, 0, data)   cmd_type = 0x80
-			# self.__send_cmd(flashdevice_defs.NAND_CMD_SEQIN)
-			# self.__send_cmd(flashdevice_defs.NAND_CMD_PAGEPROG)
-			# self.__send_cmd(flashdevice_defs.NAND_CMD_READ0)
-			# self.__send_cmd(flashdevice_defs.NAND_CMD_READ1)
-			# NAND_CMD_READSTART = 0x30  Nand Page read is initiated by writing 00h-30h
-
+            # self.__send_cmd(flashdevice_defs.NAND_CMD_SEQIN)
+            # self.__send_cmd(flashdevice_defs.NAND_CMD_PAGEPROG)
+            # self.__send_cmd(flashdevice_defs.NAND_CMD_READ0)
+            # self.__send_cmd(flashdevice_defs.NAND_CMD_READ1)
+            # NAND_CMD_READSTART = 0x30  Nand Page read is initiated by writing 00h-30h
 
         # data = the command for the Nandchip
 
@@ -277,7 +276,7 @@ class IO:
         # cmd = 4 bytes  0x92 0x00 0xAL 0xDATA
 
         # for read page address 1 this does do:  0x93  0x80 0x00 + 0x00 + loopresult ( 0x92 0x00 0x92 0x01 0x92 0x00 )
-        cmds += [ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, ord(data[0])]	# use first byte WRITE_EXTENDED = 0x93, ORD[] fails at strings > 1 byte
+        cmds += [ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, ord(data[0])]    # use first byte WRITE_EXTENDED = 0x93, ORD[] fails at strings > 1 byte
         # print('CL=0x%x AL=0x%x WP=0x%x ord=?? lendata=%d lencmds=%d' % (flashdevice_defs.ADR_CL, flashdevice_defs.ADR_AL, flashdevice_defs.ADR_WP, len(data), len(cmds))   )
         # cmds += [ ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, data[0] ]
 
@@ -317,11 +316,11 @@ class IO:
             cmd_type |= flashdevice_defs.ADR_WP
 
         # cmd = 4 bytes  0x92 0x00 0xAL 0xDATA
-        cmds += [ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, data[0] ]		# use first byte WRITE_EXTENDED = 0x93
+        cmds += [ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, data[0] ]        # use first byte WRITE_EXTENDED = 0x93
         # print('WS CL=0x%x AL=0x%x WP=0x%x ord=?? lendata=%d lencmds=%d' % (flashdevice_defs.ADR_CL, flashdevice_defs.ADR_AL, flashdevice_defs.ADR_WP, len(data), len(cmds))   )
         for i in range(1, len(data), 1): # add other bytes using WRITE_SHORT = 0x92
             # print('CL=0x%x AL=0x%x WP=0x%x ord=%s len=%d' % (flashdevice_defs.ADR_CL, flashdevice_defs.ADR_AL, flashdevice_defs.ADR_WP, hex(data[0]), len(data) )   )
-            #if i == 256:
+            # if i == 256:
             #    cmds += [Ftdi.WRITE_SHORT, 0, ord(data[i])] # invlaid call, missing ftdi... prefix
             cmds += [ftdi.Ftdi.WRITE_SHORT, 0, data[i] ]   # add other bytes using WRITE_SHORT = 0x92 0xAL 0xDATA  : 3 bytes 
 
@@ -339,7 +338,7 @@ class IO:
 
 
     # addr  & number
-    # self.__send_address((pageno<<16), self.AddrCycles)	# paged * 64K , 4 cycles to address start row for 2048 page 
+    # self.__send_address((pageno<<16), self.AddrCycles)    # paged * 64K , 4 cycles to address start row for 2048 page 
     def __send_address(self, addr, count):
         # page 0x0000 = page     0  this translates to in readpage<<16 at          '0' --> 0x00 0x00 0x00 0x00  < - colL colH rowL RowH
         # page 0x0001 = page     1  this translates to in readpage<<16 at          '0' --> 0x00 0x00 0x01 0x00
@@ -353,7 +352,7 @@ class IO:
                                         #      page2 = startbyte 131072 --> colH colL rowH rowL page2 = 00 00 02 00 
             data += chr(addr & 0xff)    # get value byte  
             # print ('__ send_address: count=%d data=0x%x' % (count, ord(chr(addr & 0xff)) )  ) 
-            addr = addr>>8				# shift next value 
+            addr = addr>>8                # shift next value 
 
         # print('\n__send_adress=%sFF' % (hex(ord(chr(addr))) ))
         # issue address 0x01 to adress page 1 via data bytes 0x00 0x00 0x01 0x00  < - colL colH rowL RowH
@@ -385,8 +384,8 @@ class IO:
 
     def __get_id(self):
     # Does send 90h 00h to retrieve 8 bytes of which 5 show the info.
-    # Samsung  new K9F1G08U0E does do: 0xec 0xf1  0x00  0x95  0x41  <>  0x41 0xec 0xf1  0x00
-    # Samsung  old K9F1G08X0C does do: 0xec 0xf1  0x00  0x95  0x40  <>  0x41 0xec 0xf1  0x00
+    # Samsung  new K9F1G08U0E returns id: 0xec 0xf1  0x00  0x95  0x41   0x41 0xec 0xf1  0x00
+    # Samsung  old K9F1G08X0C returns id: 0xec 0xf1  0x00  0x95  0x40   0x41 0xec 0xf1  0x00
         self.Name = ''
         self.ID = 0
         self.PageSize = 0
@@ -394,19 +393,18 @@ class IO:
         self.EraseSize = 0
         self.Options = 0
         self.AddrCycles = 0
-        self.Tsize = 0			# tranfer size for IO, default 0 = 512bytes
+        self.Tsize = 0        # transfer size for IO, default 0 = 512bytes
 
         if self.Debug_info:
            print('- flashdevice.__get_id: PageSize=%d' % ( self.PageSize ) ) # 0
 
-
         # samsung chip sequence: Read ID Command (90h) Device Address 1cycle 00h)
         # returns ECh (Maker) F1h (Device) 00h 95h 40h
-        #	1st Byte Make Code ECh
-        #	2nd Byte Device Code F1h
-        #	3rd Byte Internal Chip Number io1+0, Cell Type io3+2, Number of Simultaneously Programmed Pages io5+4, Interleave io6, Cache io7
-        #	4th Byte Page Size io1+0, Block Size io5+4,Redundant Area Size io2, Organization io6, Serial Access Minimum io7+io3
-        #	5th Byte Plane Number io3+2, Plane Size io6-io5-io4, reserved io7+io1+io0
+        #    1st Byte Make Code ECh
+        #    2nd Byte Device Code F1h
+        #    3rd Byte Internal Chip Number io1+0, Cell Type io3+2, Number of Simultaneously Programmed Pages io5+4, Interleave io6, Cache io7
+        #    4th Byte Page Size io1+0, Block Size io5+4,Redundant Area Size io2, Organization io6, Serial Access Minimum io7+io3
+        #    5th Byte Plane Number io3+2, Plane Size io6-io5-io4, reserved io7+io1+io0
         # print('- flashdevice: send_cmd: 0x%x' % ( flashdevice_defs.NAND_CMD_READID ) ) # 0
         self.__send_cmd(flashdevice_defs.NAND_CMD_READID) # Read chipcommand ID 90h 00h  file /home/pafoxp/code-dumpflash/dumpflash/flashdevice_defs.py
         # print('- flashdevice: __send_address(0, 1)')  # 0
@@ -424,7 +422,7 @@ class IO:
         # 4 5th 0b0100 0001:  Plane Number io3+2=0=1, Plane Size io6-io5-io4=100=1Gbit, reserved io7+io1+io0=001=n/a  
 
         # Single Chip, 1Gbit=128MB=134217728bytes,  , 64pages/block bits per cell = 4, single-layer
-		# oob space 8/512 bytes --> ((128⋅1024⋅1024)/512)*8 = 262144*8 = 2097152 bytes (total data+oob=136314880 bytes)
+        # oob space 8byte/512bytes --> ((128⋅1024⋅1024)/512)*8 = 262144*8 = 2097152 bytes (total data+oob=136314880 bytes)
 
         if not flash_identifiers:
             return False
@@ -451,7 +449,7 @@ class IO:
         self.__send_address(0x20, 1)
         onfitmp = self.__read_data(4)
 
-        onfi = (onfitmp == [0x4F, 0x4E, 0x46, 0x49])	
+        onfi = (onfitmp == [0x4F, 0x4E, 0x46, 0x49])    
 
         if onfi:
             self.__send_cmd(flashdevice_defs.NAND_CMD_ONFI)
@@ -487,12 +485,12 @@ class IO:
         for idbyte in flash_identifiers:
             idstr += "%X" % idbyte
 
-        if idstr[0:4] == idstr[-4:]:	# n/a: 0xec 0xf1  0x00  0x95  0x41 <>  0x41 0xec 0xf1  0x00
+        if idstr[0:4] == idstr[-4:]:    # n/a: 0xec 0xf1  0x00  0x95  0x41 <>  0x41 0xec 0xf1  0x00
             idstr = idstr[:-4]
             if idstr[0:2] == idstr[-2:]:
                 idstr = idstr[:-2]
 
-        self.IDString = idstr			# 0xec 0xf1  0x00  0x95  0x41 0xec 0xf1  0x00
+        self.IDString = idstr            # 0xec 0xf1  0x00  0x95  0x41 0xec 0xf1  0x00
         self.IDLength = int(len(idstr) / 2) # 4 bytes
 
 
@@ -572,7 +570,7 @@ class IO:
 
         if self.Debug_info:
            print('--- has PageSize=%d, OOBSize=%d , RawPageSize=%d , BlockSize=EraseSize=%d, BlockCount=%d' % (self.PageSize, self.OOBSize, self.RawPageSize, self.BlockSize, self.BlockCount))
-        # PageSize=2048, OOBSize=64 , RawPageSize=2112 , BlockSize=EraseSize=131072 BlockCount=1024
+        # --> PageSize=2048, OOBSize=64 , RawPageSize=2112 , BlockSize=EraseSize=131072 BlockCount=1024
 
         if self.BlockCount <= 0:
             self.PagePerBlock = 0
@@ -583,7 +581,7 @@ class IO:
         self.RawBlockSize = self.PagePerBlock*(self.PageSize + self.OOBSize)
         if self.Debug_info:
            print('--- PagePerBlock=%d , RawBlockSize=%d' % (self.PagePerBlock, self.RawBlockSize) )
-        # PagePerBlock=64 , RawBlockSize=135168
+        # --> PagePerBlock=64 , RawBlockSize=135168
 
         return True
 
@@ -598,12 +596,12 @@ class IO:
 
     def get_bits_per_cell(self, cellinfo):
         # 2 3rd 0b0000 0000:  Byte Internal Chip Number io1+0=0=1, Cell Type io3+2=0=2ndLC, Number of Simultaneously Programmed Pages io5+4=0=1, Interleave io6=0=n/a, Cache io7=0=n/a
-        # returns 1
+        # returns 1 for  Samsung SLC
         bits = cellinfo & flashdevice_defs.NAND_CI_CELLTYPE_MSK
         bits >>= flashdevice_defs.NAND_CI_CELLTYPE_SHIFT
         return bits+1
 
-    def dump_info(self):
+    def dump_info(self):  # display derived information
         print('Full ID:\t', self.IDString)
         print('ID Length:\t', self.IDLength)
         print('Name:\t\t', self.Name)
@@ -623,8 +621,7 @@ class IO:
         print('')
 
     def check_bad_blocks(self): # not called by routines here, dumpflash uses flashimage.py version   
-        bad_blocks = {}
-#        end_page = self.PageCount
+        bad_blocks = {}  # array
 
         if self.PageCount%self.PagePerBlock > 0.0:
             self.BlockCount += 1
@@ -650,7 +647,6 @@ class IO:
         return bad_blocks
 
 
-
     def read_oob(self, pageno, oob_size=0): # //here_read_oob adapted to segmentation of 16 bytes that dopes read oob
         bytes_to_send = []
         bytes_to_read = bytearray()
@@ -667,18 +663,18 @@ class IO:
 
             # time.sleep(0.1)
             # self.__send_cmd(flashdevice_defs.NAND_CMD_READ0)     # NAND_CMD_READ0 = 0x00
-            # self.__send_address(((pageno<<16)+self.PageSize), self.AddrCycles)	 # paged * 64K , 4 cycles
+            # self.__send_address(((pageno<<16)+self.PageSize), self.AddrCycles)     # paged * 64K , 4 cycles
             # self.__send_cmd(flashdevice_defs.NAND_CMD_READSTART) # NAND_CMD_READSTART = 0x30 
             # time.sleep(0.02)
             # self.__wait_ready()
-            # bytes_to_send += self.__read_data(oob_size)	     # 64bytes  via return self.__read(0, 0, 64) -- > __read(self, cl, al, count
+            # bytes_to_send += self.__read_data(oob_size)         # 64bytes  via return self.__read(0, 0, 64) -- > __read(self, cl, al, count
 
         else: # Note this else NAND_CMD_READ_OOB function does not exist on Samsung chip
-            self.__send_cmd(flashdevice_defs.NAND_CMD_READ_OOB)		# NAND_CMD_READ_OOB = 0x50
+            self.__send_cmd(flashdevice_defs.NAND_CMD_READ_OOB)        # NAND_CMD_READ_OOB = 0x50
             self.__wait_ready()
             self.__send_address(pageno<<8, self.AddrCycles)  # 4 cycles
             self.__wait_ready()
-            bytes_to_send += self.__read_data()	 # 64bytes  via return self.__read(0, 0, 64) -- > __read(self, cl, al, count
+            bytes_to_send += self.__read_data()     # 64bytes  via return self.__read(0, 0, 64) -- > __read(self, cl, al, count
 
         data = ''
 
@@ -776,8 +772,9 @@ class IO:
             length -= tsize
 
             # if tsize > 1: tsize = int(tsize / 2)
- 
         return bytes_to_read
+
+
 
     def read_page(self, pageno, remove_oob = False, tsize = 512): # //here_readpage segmentation
     # called via for page in range(start_page, end_page, 1) 
@@ -831,28 +828,28 @@ class IO:
 
                 addr_len = 0
                 length = (self.PageSize+self.OOBSize)   # output OOB
-                #		python3 dumpflash.py -t 700 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 873423 bytes/s
+                #        python3 dumpflash.py -t 700 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 873423 bytes/s
                 addr_len = 0
                 length = (self.PageSize+self.OOBSize)   # output OOB
-                #		python3 dumpflash.py -t 512 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 650627 bytes/s
+                #        python3 dumpflash.py -t 512 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 650627 bytes/s
  
                 # Only do OOB
                 addr_len = self.PageSize
                 length = self.OOBSize
-                # 		python3 dumpflash.py -t 22 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 32134 bytes/s (640KB out)
+                #         python3 dumpflash.py -t 22 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 32134 bytes/s (640KB out)
 
                 # 
                 addr_len = 0            
                 length = self.PageSize  # 2112
-                # 		python3 dumpflash.py -t 704 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 866913 bytes/s ()
+                #         python3 dumpflash.py -t 704 -o dump11apr23_00u13.bin -p 0 10000 -c r  # 866913 bytes/s ()
 
                 addr_len = self.PageSize
                 length = self.OOBSize
-                # 		python3 dumpflash.py -t 16 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 25300 bytes/s ()
+                #         python3 dumpflash.py -t 16 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 25300 bytes/s ()
 
                 addr_len = 0
                 length = self.PageSize+self.OOBSize
-                # 		python3 dumpflash.py -t 708 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 856582 bytes/s ()
+                #         python3 dumpflash.py -t 708 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 856582 bytes/s ()
 
 
                 # 2112  column 0x0840 =    0000 1000 0100 0000  = 12 adress bytes --> A11 to A0 for column
@@ -860,12 +857,12 @@ class IO:
 
                 addr_len = self.PageSize
                 length = self.OOBSize
-                # 		python3 dumpflash.py -t 22 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 32459 bytes/s (1000p/s)
+                #         python3 dumpflash.py -t 22 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 32459 bytes/s (1000p/s)
 
                 addr_len = 0
                 length = self.PageSize+self.OOBSize
-                # 		python3 dumpflash.py -t 707 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 856582 bytes/s (some start errors)
-                # 		python3 dumpflash.py -t 700 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 877957 bytes/s ()
+                #         python3 dumpflash.py -t 707 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 856582 bytes/s (some start errors)
+                #         python3 dumpflash.py -t 700 -o dump11apr23_00u13.bin -p 0 65535 -c r  # 877957 bytes/s ()
 
                 # print (' Length=', length, 'Offset=', addr_len, 'tsize=', tsize  )
 
@@ -873,7 +870,8 @@ class IO:
 
 #                                def read_page_segment(self, address, length, cycles, tsize): # //here_readpage segmentation
                 bytes_to_read = self.read_page_segment( (pageno<<16)+addr_len, length, self.AddrCycles, tsize)
-#                while length > 0:
+
+#                while length > 0:  # used to read per segment, no longer needed as IORDY enlongates data
 #                    read_len = tsize
 #                    if length < tsize: read_len = length
 #                    # self.__wait_ready()  # test if this improves
@@ -892,11 +890,11 @@ class IO:
                     # if tsize > 1: tsize = int(tsize / 2)
 
             else:
-                self.__send_cmd(flashdevice_defs.NAND_CMD_READ0)  # NAND_CMD_READ0 = 0x00 -->  set I/O pins CLE 33
-                self.__send_address(pageno<<16, self.AddrCycles)  # (0--> 0, 1 --> 65536, 2 --> 131072 ) with Address cycle: 4 set I/O pins ALE 34
+                self.__send_cmd(flashdevice_defs.NAND_CMD_READ0)      # NAND_CMD_READ0 = 0x00 -->  set I/O pins CLE 33
+                self.__send_address(pageno<<16, self.AddrCycles)      # (0--> 0, 1 --> 65536, 2 --> 131072 ) with Address cycle: 4 set I/O pins ALE 34
                 self.__send_cmd(flashdevice_defs.NAND_CMD_READSTART)  # NAND_CMD_READSTART = 0x30 -->  set I/O pins CLE 33
                 length = self.PageSize + self.OOBSize
-                if self.PageSize > 0x1000:	# > 4096            # loop for page sizes > 4096
+                if self.PageSize > 0x1000:    # > 4096   # loop for page sizes > 4096
                     while length > 0:
                         read_len = 0x1000
                         if length < 0x1000:
@@ -912,7 +910,7 @@ class IO:
                  #d: Implement remove_oob
 
         else:
-            # Note this sequence is NOT supported for Samsung chip
+            # Note this sequence is NOT applicable for Samsung chip
             self.__send_cmd(flashdevice_defs.NAND_CMD_READ0)
             self.__wait_ready()
             self.__send_address(pageno<<8, self.AddrCycles)
@@ -932,12 +930,12 @@ class IO:
                 self.__wait_ready()
                 bytes_to_read += self.__read_data(self.OOBSize)
 
-		# >>> x = "Hello World!" 
-		# >>> x[2:] 'llo World!'
-		# >>> x[:2] 'He'
-		# >>> x[:-2] 'Hello Worl'
-		# >>> x[-2:] 'd!'
-		# >>> x[2:-2] 'llo Worl'
+        # >>> x = "Hello World!" 
+        # >>> x[2:] 'llo World!'
+        # >>> x[:2] 'He'
+        # >>> x[:-2] 'Hello Worl'
+        # >>> x[-2:] 'd!'
+        # >>> x[2:-2] 'llo Worl'
 
         # //here_oobstrip
         # return bytes_to_read[-64:] # oob parts
@@ -975,7 +973,7 @@ class IO:
          #     force a value on the bits that are set as output. 
          #     A '1' in the Direction byte will make that bit an output.
          # The low byte would be ADBUS 7-0, and the high byte is BDBUS 7-0.
-        # self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x0, 0x1]))   # SET_BITS_HIGH = 0x82    # Change MSB GPIO output
+         # self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x0, 0x1]))   # SET_BITS_HIGH = 0x82    # Change MSB GPIO output
 
         self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x1, 0x1]))   # SET_BITS_HIGH = 0x82    # Change MSB GPIO output
         self.ftdi.write_data(Array('B', [ftdi.Ftdi.SET_BITS_HIGH, 0x0, 0x1]))   # pin 45 NanD Chip-Enable Low Output
@@ -1016,34 +1014,32 @@ class IO:
         return err
 
     def write_page(self, pageno, data):
-        # 	summary: self.__send_cmd(flashdevice_defs.NAND_CMD_SEQIN) 	# NAND_CMD_SEQIN    = 0x80
-        # 	self.__send_address(pageno<<16, self.AddrCycles)     		# construct 0xColH 0xColL 0xRowH 0xRowL
+        #     summary: self.__send_cmd(flashdevice_defs.NAND_CMD_SEQIN)     # NAND_CMD_SEQIN    = 0x80
+        #     self.__send_address(pageno<<16, self.AddrCycles)             # construct 0xColH 0xColL 0xRowH 0xRowL
         #   self.__write_datastring(data)  --> return self.__writestring(0, 0, data)  # 0,0 NO CLacch and No ALatch
-        #---#       cmds += [ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, data[0] ]		# use first byte WRITE_EXTENDED = 0x93
+        #---#       cmds += [ftdi.Ftdi.WRITE_EXTENDED, cmd_type, 0, data[0] ]        # use first byte WRITE_EXTENDED = 0x93
             #       cmds += [ftdi.Ftdi.WRITE_SHORT, 0, data[i] ]                     # add other bytes using WRITE_SHORT = 0x92 0xAL 0xDATA  : 3 bytes 
-            #       self.__send_cmd(flashdevice_defs.NAND_CMD_PAGEPROG)  		# NAND_CMD_PAGEPROG = 0x10
+            #       self.__send_cmd(flashdevice_defs.NAND_CMD_PAGEPROG)          # NAND_CMD_PAGEPROG = 0x10
             #
             #---#   self.ftdi.write_data(Array('B', cmds))          In MPSSE mode, data contains the sequence of MPSSE commands and  data.
-		        #   file: /home/pafoxp/code-dumpflash/pyftdi-0.29.0/pyftdi/ftdi.py
-		        #                                                   Data buffer is split into chunk-sized blocks before being sent over the USB bus.
-		        #---# 
-					#	offset = 0
-					#	size = len(data)
-					#	try:
-					#		while offset < size:
-					#		    write_size = self.writebuffer_chunksize
-					#		    if offset + write_size > size:
-					#		        write_size = size - offset
-					#		    length = self._write(data[offset:offset+write_size])
-					#		    if length <= 0:
-					#		        raise FtdiError("Usb bulk write error")
-					#		    offset += length
-					#		return offset
+                #   file: /home/pafoxp/code-dumpflash/pyftdi-0.29.0/pyftdi/ftdi.py
+                #                                                   Data buffer is split into chunk-sized blocks before being sent over the USB bus.
+                #---# 
+                    #    offset = 0
+                    #    size = len(data)
+                    #    try:
+                    #        while offset < size:
+                    #            write_size = self.writebuffer_chunksize
+                    #            if offset + write_size > size:
+                    #                write_size = size - offset
+                    #            length = self._write(data[offset:offset+write_size])
+                    #            if length <= 0:
+                    #                raise FtdiError("Usb bulk write error")
+                    #            offset += length
+                    #        return offset
 
-					#	if self.ftdi is None or not self.ftdi.is_connected:
-					#		return
-
-
+                    #    if self.ftdi is None or not self.ftdi.is_connected:
+                    #        return
 
         err = 0
         self.WriteProtect = False    # write protect inactive  
@@ -1141,7 +1137,7 @@ class IO:
     # datastring is used to write if filename is not used
 
         # print('write_pages: read filename=', filename, ' datalen=', len(datastring), 'data=', type(datastring))  #  <class 'bytes'>
-        # data = bytearray(datastring, 'utf-8')	# conver string to byte array double size
+        # data = bytearray(datastring, 'utf-8')    # conver string to byte array double size
         # data = Array("B",datastring) # TypeError: cannot use a str to initialize an array with typecode 'B'
         # data = Array("C",datastring) # TypeError: cannot use a str to initialize an array with typecode 'B'
 
@@ -1184,7 +1180,7 @@ class IO:
         length = 0
 
         # print('\nWritten3 %x bytes / %d byte' % (length, len(data))) # debug test verify datalenght 2112
-        # dilemma
+        # dilemma TBD
         #   read without oob, read with oob : skip = 
         #
         while page <= end_page and current_data_offset < len(data) and block < self.BlockCount:

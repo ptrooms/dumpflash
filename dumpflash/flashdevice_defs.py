@@ -1,18 +1,18 @@
-ADR_CE = 0x10
-ADR_WP = 0x20
-ADR_CL = 0x40
-ADR_AL = 0x80
+ADR_CE = 0x10   # FTDI2232 ADBUS4 (not used)
+ADR_WP = 0x20   # FTDI2232 ADBUS5
+ADR_CL = 0x40   # FTDI2232 ADBUS6
+ADR_AL = 0x80   # FTDI2232 ADBUS7
 
 NAND_CMD_READ0 = 0
 NAND_CMD_READ1 = 1
 NAND_CMD_RNDOUT = 5
 NAND_CMD_PAGEPROG = 0x10
-NAND_CMD_READ_OOB = 0x50
+NAND_CMD_READ_OOB = 0x50  # not used with Samsung chip
 NAND_CMD_ERASE1 = 0x60
-NAND_CMD_STATUS = 0x70
+NAND_CMD_STATUS = 0x70    # used frequently
 NAND_CMD_STATUS_MULTI = 0x71
-NAND_CMD_SEQIN = 0x80
-NAND_CMD_RNDIN = 0x85
+NAND_CMD_SEQIN = 0x80     # not used with Samsung chip
+NAND_CMD_RNDIN = 0x85     # not used with Samsung chip
 NAND_CMD_READID = 0x90
 NAND_CMD_ERASE2 = 0xd0
 NAND_CMD_PARAM = 0xec
@@ -23,15 +23,15 @@ NAND_CMD_UNLOCK2 = 0x24
 NAND_CMD_READSTART = 0x30
 NAND_CMD_RNDOUTSTART = 0xE0
 NAND_CMD_CACHEDPROG = 0x15
-NAND_CMD_ONFI = 0xEC
+NAND_CMD_ONFI = 0xEC      # # not used with Samsung chip
 NAND_CI_CHIPNR_MSK = 0x03
 NAND_CI_CELLTYPE_MSK = 0x0C
 NAND_CI_CELLTYPE_SHIFT = 2
 
-NAND_STATUS_FAIL = (1<<0) # HIGH - FAIL,  LOW - PASS
-NAND_STATUS_IDLE = (1<<5) # when statusbyte is empty)
-NAND_STATUS_READY = (1<<6) # HIGH - READY, LOW - BUSY
-NAND_STATUS_NOT_PROTECTED = (1<<7) # HIGH - NOT,   LOW - PROTECTED
+NAND_STATUS_FAIL = (1<<0)          # mask 0x01 HIGH - FAIL,  LOW - PASS
+NAND_STATUS_IDLE = (1<<5)          # mask 0x20 when statusbyte cmd 0x070 could not read or is empty)
+NAND_STATUS_READY = (1<<6)         # mask 0x40 R_B line, HIGH - READY, LOW - BUSY
+NAND_STATUS_NOT_PROTECTED = (1<<7) # mask 0x80 HIGH - NOT,   LOW - PROTECTED
 
 LP_OPTIONS = 1
 DEVICE_DESCRIPTIONS = [
@@ -68,7 +68,7 @@ DEVICE_DESCRIPTIONS = [
 
     # 1 Gigabit
     ["NAND 128MiB 1,8V 8-bit",    0xA1, 0, 128, 0, LP_OPTIONS, 4],
-    ["NAND 128MiB 3,3V 8-bit",    0xF1, 0, 128, 0, LP_OPTIONS, 4],
+    ["NAND 128MiB 3,3V 8-bit",    0xF1, 0, 128, 0, LP_OPTIONS, 4],  # Samsung chip
     ["NAND 128MiB 3,3V 8-bit",    0xD1, 0, 128, 0, LP_OPTIONS, 4],
 
     # 2 Gigabit
